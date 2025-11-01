@@ -1,0 +1,9 @@
+metric,current_value,previous_value,target_value,unit,change_percent
+ARR,20100000,19200000,21000000,currency,4.7
+MRR,133167,126667,135000,currency,5.1
+Churn Rate,1.68,1.94,2.00,percent,-13.4
+Customer Count,595,568,600,number,4.8
+Routes Completed,158,152,160,number,3.9
+Avg Quality Score,4.7,4.5,4.5,rating,4.4
+NPS Score,72,68,75,score,5.9
+Revenue Growth,5.1,3.8,5.0,percent,34.2
