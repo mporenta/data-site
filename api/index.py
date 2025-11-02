@@ -3,7 +3,7 @@ Main FastAPI application entry point
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.routers import health, bi_metadata, bi_query
+from routers import health, bi_metadata, bi_query
 
 app = FastAPI(
     title="BI Web App API",
@@ -12,9 +12,10 @@ app = FastAPI(
 )
 
 # Configure CORS
+# Allow specific domains: *.goaptive.com, *.aptivepestcontrol.com, *.porenta.us, localhost
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origin_regex=r"https?://(.*\.)?goaptive\.com|https?://(.*\.)?aptivepestcontrol\.com|https?://(.*\.)?porenta\.us|https?://localhost(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

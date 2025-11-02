@@ -11,23 +11,36 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
   return (
     <header className="sticky top-0 z-999 flex w-full bg-white drop-shadow-1 dark:bg-boxdark dark:drop-shadow-none border-b border-stroke dark:border-strokedark">
       <div className="flex flex-grow items-center justify-between px-4 py-4 shadow-2 md:px-6 2xl:px-11">
-        {/* Hamburger Menu Button */}
-        <div className="flex items-center gap-2 sm:gap-4 lg:hidden">
+        {/* Mobile: Hamburger + Logo + Title */}
+        <div className="flex items-center gap-3 sm:gap-4 lg:hidden">
           <button
             aria-controls="sidebar"
             onClick={(e) => {
               e.stopPropagation()
               setSidebarOpen(!sidebarOpen)
             }}
-            className="z-99999 block rounded-sm border border-stroke bg-white p-1.5 shadow-sm dark:border-strokedark dark:bg-boxdark lg:hidden"
+            className="z-99999 block rounded-sm border border-stroke bg-white p-1.5 shadow-sm dark:border-strokedark dark:bg-boxdark"
           >
             <Menu className="w-5 h-5" />
           </button>
+          <img
+            src="/Aptive_Primarylogo_pine_344C38.png"
+            alt="Aptive"
+            className="h-6"
+          />
+          <h1 className="text-sm font-semibold text-black dark:text-white font-serif">
+            BI Dashboard
+          </h1>
         </div>
 
-        {/* Hidden on mobile, shown on desktop */}
-        <div className="hidden sm:block">
-          <h1 className="text-xl font-semibold text-black dark:text-white">
+        {/* Desktop: Logo + Title */}
+        <div className="hidden lg:flex items-center gap-4">
+          <img
+            src="/Aptive_Primarylogo_pine_344C38.png"
+            alt="Aptive"
+            className="h-8"
+          />
+          <h1 className="text-xl font-semibold text-black dark:text-white font-serif">
             Business Intelligence Dashboard
           </h1>
         </div>

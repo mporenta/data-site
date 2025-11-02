@@ -3,8 +3,13 @@ import './globals.css'
 import DefaultLayout from '@/components/Layouts/DefaultLayout'
 
 export const metadata: Metadata = {
-  title: 'BI Web App - Executive Dashboard',
-  description: 'Business Intelligence Dashboard for C-Suite Executives',
+  title: 'Aptive BI Web App - Executive Dashboard',
+  description: 'Aptive Business Intelligence Dashboard for C-Suite Executives',
+  icons: {
+    icon: 'https://goaptive.com/wp-content/uploads/2022/11/favicon.svg',
+    shortcut: 'https://goaptive.com/wp-content/uploads/2022/11/favicon.svg',
+    apple: 'https://goaptive.com/wp-content/uploads/2022/11/favicon.svg',
+  },
 }
 
 export default function RootLayout({

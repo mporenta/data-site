@@ -4,7 +4,136 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Business Intelligence web application for C-suite executives, built as a POC combining Next.js 16 frontend with a Python FastAPI backend. The app displays executive dashboards with KPIs and visualizations sourced from CSV files (with plans to integrate Snowflake).
+This is a Business Intelligence web application for Aptive Environmental C-suite executives, built as a POC combining Next.js 16 frontend with a Python FastAPI backend. The app displays executive dashboards with KPIs and visualizations sourced from CSV files (with plans to integrate Snowflake).
+
+## Aptive Brand Guidelines
+
+### Color Palette
+
+Aptive's color system is built around natural, earthy tones that convey warmth, trust, and environmental consciousness.
+
+#### Primary Colors
+
+**Pine (Core Brand Color)**
+- Hex: `#344C38`
+- RGB: 52, 76, 56
+- CMYK: 74, 47, 76, 45
+- Usage: Primary brand color, used specifically for the Aptive wordmark
+
+**Forest Black**
+- Hex: `#0D210F`
+- Usage: Deep, rich dark tone for text and emphasis
+
+**Snow (White)**
+- Hex: `#FFFFFF`
+- Usage: Clean backgrounds and contrast
+
+**Sun (Accent)**
+- Hex: `#D7FD19`
+- Usage: Bright accent for calls-to-action and energy
+
+#### Secondary Colors
+
+**Pine Family (Greens)**
+- `#78856E` - Mid-tone pine
+- `#B5C5B2` - Light pine
+- `#EBF7E8` - Very light pine
+- `#F5F7ED` - Pale pine/cream
+- `#309C42` - Vibrant green
+
+**Blue Tones**
+- `#1E2D3A` - Deep blue-gray
+- `#B8CCC9` - Soft blue-green
+- `#EAF4F4` - Pale blue
+
+**Earth Tones**
+- `#8A7357` - Warm brown
+- `#BDB2A0` - Light tan
+- `#EAECDA` - Cream
+
+**Neutral Grays**
+- `#212121` - Dark gray
+- `#3F3F3F` - Medium gray
+
+### Typography
+
+Aptive uses three primary typefaces, each serving specific purposes in the brand hierarchy:
+
+#### GT Super (Headlines & Display)
+- **Purpose**: Primary typeface for headlines and first impressions
+- **Character**: Expressive display serif with warmth, strength, and reassurance
+- **Design**: Based on 1970s-80s display serif typography with unique calligraphic motions
+- **Designer**: Noël Leu (Grilli Type) with Mirco Schiavone & Reto Moser
+- **Font Files Available**:
+  - `2357GT-Super.woff2/woff`
+  - `1435GT-Super.woff2/woff`
+  - `2073GT-Super.woff2/woff`
+  - `929GT-Super.woff2/woff`
+  - `9885GT-Super.woff2/woff`
+  - `7607GT-Super.woff2/woff`
+  - `304GT-Super.woff2/woff`
+  - `7486GT-Super.woff2/woff`
+  - `4281GT-Super.woff2/woff`
+  - `1281GT-Super.woff2/woff`
+
+#### Rand (Body Text)
+- **Purpose**: Primary typeface for body copy and core messaging
+- **Character**: Grotesque sans-serif with organic texture and balanced rhythm
+- **Design**: Born from intensive research on the grotesque genre, matches the neighborliness of Aptive
+- **Designer**: François Rappo (Optimo)
+- **Font Files Available**:
+  - `2012Rand.woff2/woff`
+  - `590Rand.woff2/woff`
+  - `1715Rand.woff2/woff`
+  - `6799Rand.woff2/woff`
+  - `4284Rand.woff2/woff`
+  - `2953Rand.woff2/woff`
+  - `7760Rand.woff2/woff`
+
+#### Rand Mono (Technical & Call-outs)
+- **Purpose**: Technical information, call-outs, and subheadings
+- **Character**: Monospaced companion to Rand with shortened capitals
+- **Design**: Carefully crafted proportions that complement the Rand family
+- **Designer**: François Rappo (Optimo)
+- **Font Files Available**:
+  - `8404Rand-Mono.woff2/woff`
+  - `4464Rand-Mono.woff2/woff`
+  - `3431Rand-Mono.woff2/woff`
+  - `1865Rand-Mono.woff2/woff`
+  - `1263Rand-Mono.woff2/woff`
+
+**Typography Hierarchy**:
+- Headlines: GT Super
+- Body Text: Rand
+- Subheads/Technical: Rand Mono
+
+### Logo
+
+#### Wordmark Specifications
+- **Typeface**: LL Brown – Bold (custom modified)
+- **Modifications**: 
+  - Shortened descender on the "p"
+  - Lowered ascending tittle
+  - Custom optical kerning
+- **Purpose**: Creates compact, scalable wordmark with geometric and rhythmic balance
+- **Character**: Approachable, unobtrusive, and welcoming
+
+#### Logo Usage Guidelines
+- **Always use vector files** - Never type out the wordmark in LL Brown Bold
+- **Spacing reference**: Use the "a" as your reference for spacing around the logo
+- **Core color**: Pine (#344C38) for the wordmark
+- **Maintain integrity**: Consult Aptive's creative team when in doubt
+
+#### Important Don'ts
+- Do not stretch or distort the logo
+- Do not recreate the wordmark by typing
+- Do not modify letter spacing
+- Maintain proper clear space around the logo
+
+### Font CDN Resources
+All Aptive fonts are hosted at: `https://marketo.aptivepestcontrol.com/rs/773-UEC-876/images/`
+
+- When implementing Aptive brand designs, always use these official font files and maintain the established color palette for brand consistency.
 
 ## Architecture
 
@@ -23,6 +152,22 @@ The frontend makes HTTP requests to the backend API to fetch dashboard data.
 - **Router Pattern**: API endpoints are organized into routers (`health`, `bi_metadata`, `bi_query`) that are included in the main app.
 - **CSV Data Source**: Currently reads from CSV files in `api/data/`. Production will query Snowflake.
 - **Vercel Deployment**: The `vercel.json` configuration routes all `/api/*` requests to the Python function while Next.js handles the frontend.
+
+### Production Deployment Architecture
+
+The Docker Compose setup includes a full production stack:
+
+1. **Python API Service** (port 8000, internal) - FastAPI backend with health checks
+2. **Next.js Service** (port 3000, internal) - Frontend in production mode with standalone build
+3. **Nginx Reverse Proxy** (ports 80/443) - Routes traffic to frontend and API
+4. **Certbot** - Automatic SSL certificate management and renewal
+
+All services include:
+- Resource limits (CPU/memory)
+- Health checks with automatic restarts
+- Security hardening (read-only filesystems, dropped capabilities, no-new-privileges)
+- Structured logging with rotation
+- Graceful shutdowns
 
 ## Common Commands
 
@@ -51,16 +196,48 @@ npm run dev
 
 ### Build & Deploy
 
+**Local Production Build:**
+
 ```bash
 # Build Next.js for production
 npm run build
 
 # Start production Next.js server
 npm start
+```
 
+**Vercel Deployment:**
+
+```bash
 # Deploy to Vercel
 vercel
 vercel --prod
+```
+
+**Docker Deployment:**
+
+```bash
+# Build and start all services (Next.js, Python API, Nginx, SSL)
+npm run docker:build
+npm run docker:up
+
+# View logs
+npm run docker:logs
+
+# Check service status
+npm run docker:ps
+
+# Restart services
+npm run docker:restart
+
+# Rebuild and restart
+npm run docker:rebuild
+
+# Stop services
+npm run docker:down
+
+# Clean up all Docker resources
+npm run docker:clean
 ```
 
 ### Linting
@@ -165,8 +342,11 @@ Available report_id values for `/bi/query`:
 
 ### Environment Variables
 
-Environment variables are in `.env.local` (not `.env`):
+**Development:** Environment variables are in `.env.local` (not `.env`)
 
+**Docker/Production:** Environment variables are loaded from `.env` file (not committed to git)
+
+Required variables:
 ```
 SNOWFLAKE_ACCOUNT=...
 SNOWFLAKE_USER=...
@@ -174,6 +354,8 @@ SNOWFLAKE_PASSWORD=...
 SNOWFLAKE_WAREHOUSE=...
 SNOWFLAKE_DATABASE=...
 SNOWFLAKE_SCHEMA=...
+NEXT_PUBLIC_API_URL=http://localhost:8000  # Development only
+DOMAIN=yourdomain.com  # Docker deployment only
 ```
 
 Currently unused (CSV mode), but required for Snowflake integration.
@@ -225,11 +407,22 @@ open http://localhost:8000/docs
 
 ## Important Notes
 
+### Development
 - The Python API must be running for the frontend to display any data
-- CORS is currently set to allow all origins (`allow_origins=["*"]`) - restrict in production
+- Python uses virtual environment at `./venv` - always use `./venv/bin/python` or `./venv/bin/pip`
+- The `start.sh` script handles graceful shutdown of both servers with Ctrl+C
+- Pages are client components (`'use client'`) due to data fetching and useState/useEffect usage
+
+### Data & API
 - CSV data includes mock executive metrics for demonstration
 - Dashboard pages expect specific data structures from the API (columns + rows)
 - All numeric values in CSV are automatically converted to int/float by the API
-- Pages are client components (`'use client'`) due to data fetching and useState/useEffect usage
-- Python uses virtual environment at `./venv` - always use `./venv/bin/python` or `./venv/bin/pip`
-- The `start.sh` script handles graceful shutdown of both servers with Ctrl+C
+- CORS is currently set to allow all origins (`allow_origins=["*"]`) - restrict in production
+
+### Docker Deployment
+- Next.js uses standalone build mode (configured in `next.config.js`)
+- Services communicate via Docker network (Next.js → http://python-api:8000)
+- Nginx routes `/api/*` to Python service, everything else to Next.js
+- SSL certificates are managed automatically by Certbot
+- All containers run as non-root users with security hardening
+- Logs are rotated automatically (max 10MB, 3 files per service)

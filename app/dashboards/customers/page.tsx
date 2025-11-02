@@ -27,7 +27,9 @@ export default function CustomersDashboard() {
 
   const fetchData = async () => {
     try {
-      const response = await fetch('http://localhost:8000/bi/query?report_id=customer-churn')
+      const response = await fetch('/api/bi/query?report_id=customer-churn', {
+        cache: 'no-store'
+      })
       const result = await response.json()
       setData(result.data.rows)
     } catch (error) {

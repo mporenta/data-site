@@ -1,7 +1,7 @@
 """
 BI Query router - reads CSV data files and returns JSON
 """
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Response
 from typing import Optional, Dict, Any, List
 import csv
 import os
@@ -82,14 +82,19 @@ def read_csv_data(report_id: str) -> Dict[str, Any]:
 
 @router.get("/query")
 async def query_data(
+    response: Response,
     report_id: str = Query(..., description="Report ID to query"),
     filters: Optional[str] = Query(None, description="Optional filters as JSON string")
 ):
     """
     Read data from CSV files and return as JSON
 
-    In production, this would query Snowflake or dbt models
+    In production, this will query AWS RDS databases
     """
+    # Set cache-control headers with short TTL for real-time dashboards
+    # Adjust max-age as needed based on data freshness requirements
+    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=120"
+
     # Read data from CSV
     result = read_csv_data(report_id)
 

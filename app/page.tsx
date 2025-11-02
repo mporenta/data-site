@@ -1,7 +1,9 @@
-'use client'
-
-import { useEffect, useState } from 'react'
 import KPICard from '@/components/KPICard'
+import { fetchFromApi } from '@/lib/api'
+
+// Force dynamic rendering - don't prerender at build time
+// This page requires real-time data and is behind Okta auth
+export const dynamic = 'force-dynamic'
 
 interface KPIData {
   metric: string
@@ -12,52 +14,42 @@ interface KPIData {
   change_percent: number
 }
 
-export default function Home() {
-  const [kpis, setKpis] = useState<KPIData[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchKPIs()
-  }, [])
-
-  const fetchKPIs = async () => {
-    try {
-      const response = await fetch('http://localhost:8000/bi/query?report_id=kpi-summary')
-      const result = await response.json()
-      setKpis(result.data.rows)
-    } catch (error) {
-      console.error('Error fetching KPIs:', error)
-    } finally {
-      setLoading(false)
-    }
+interface ApiResponse {
+  report_id: string
+  data: {
+    columns: string[]
+    rows: KPIData[]
+    count: number
   }
+  source: string
+  message: string
+}
 
-  const getKPI = (metric: string) => {
-    return kpis.find(k => k.metric === metric)
-  }
+// Helper functions
+function getKPI(kpis: KPIData[], metric: string) {
+  return kpis.find(k => k.metric === metric)
+}
 
-  const getTrend = (changePercent: number) => {
-    if (changePercent > 0) return 'up'
-    if (changePercent < 0) return 'down'
-    return 'neutral'
-  }
+function getTrend(changePercent: number): 'up' | 'down' | 'neutral' {
+  if (changePercent > 0) return 'up'
+  if (changePercent < 0) return 'down'
+  return 'neutral'
+}
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-black dark:text-white">Loading...</div>
-      </div>
-    )
-  }
+// Server Component - data fetching happens on the server
+export default async function Home() {
+  // Fetch KPI data on the server
+  const result = await fetchFromApi<ApiResponse>('/api/bi/query?report_id=kpi-summary')
+  const kpis = result.data.rows
 
-  const arr = getKPI('ARR')
-  const mrr = getKPI('MRR')
-  const churn = getKPI('Churn Rate')
-  const customers = getKPI('Customer Count')
-  const routes = getKPI('Routes Completed')
-  const quality = getKPI('Avg Quality Score')
-  const nps = getKPI('NPS Score')
-  const growth = getKPI('Revenue Growth')
+  const arr = getKPI(kpis, 'ARR')
+  const mrr = getKPI(kpis, 'MRR')
+  const churn = getKPI(kpis, 'Churn Rate')
+  const customers = getKPI(kpis, 'Customer Count')
+  const routes = getKPI(kpis, 'Routes Completed')
+  const quality = getKPI(kpis, 'Avg Quality Score')
+  const nps = getKPI(kpis, 'NPS Score')
+  const growth = getKPI(kpis, 'Revenue Growth')
 
   return (
     <>

@@ -25,7 +25,9 @@ export default function OperationsDashboard() {
 
   const fetchData = async () => {
     try {
-      const response = await fetch('http://localhost:8000/bi/query?report_id=field-ops')
+      const response = await fetch('/api/bi/query?report_id=field-ops', {
+        cache: 'no-store'
+      })
       const result = await response.json()
       setData(result.data.rows)
     } catch (error) {

@@ -25,6 +25,21 @@ const nextConfig = {
       },
     ]
   },
+
+  // Proxy API requests to Python FastAPI in development
+  // Note: Python API serves at /bi/*, so we strip the /api prefix
+  async rewrites() {
+    return process.env.NODE_ENV === 'development' ? [
+      {
+        source: '/api/bi/:path*',
+        destination: 'http://127.0.0.1:8000/bi/:path*'
+      },
+      {
+        source: '/api/health',
+        destination: 'http://127.0.0.1:8000/health'
+      }
+    ] : []
+  },
 }
 
 module.exports = nextConfig

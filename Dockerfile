@@ -7,12 +7,16 @@ ENV NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
 
+# Upgrade npm to the latest version
+RUN npm install -g npm@latest
+
 # Dependencies stage
 FROM base AS dependencies
 COPY package.json package-lock.json ./
 RUN npm ci --only=production && \
     cp -R node_modules /tmp/prod_node_modules && \
-    npm ci
+    npm ci \
+    npm install recharts react-is
 
 # Build stage
 FROM base AS builder
