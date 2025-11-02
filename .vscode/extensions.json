@@ -1,0 +1,24 @@
+{
+  "recommendations": [
+    // Tailwind CSS IntelliSense - autocomplete for Tailwind classes
+    "bradlc.vscode-tailwindcss",
+
+    // ESLint - JavaScript/TypeScript linting
+    "dbaeumer.vscode-eslint",
+
+    // Prettier - code formatting
+    "esbenp.prettier-vscode",
+
+    // Python support
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.black-formatter",
+
+    // Docker support
+    "ms-azuretools.vscode-docker",
+
+    // Additional helpful extensions
+    "bradlc.vscode-tailwindcss",
+    "csstools.postcss"
+  ]
+}

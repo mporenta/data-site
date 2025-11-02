@@ -80,6 +80,7 @@ cd data-site
 
 # 2. Install Node dependencies
 npm install
+npm install recharts react-is
 
 # 3. Set up Python virtual environment
 python3.11 -m venv venv
@@ -113,7 +114,6 @@ cp .env.local.example .env.local
 npm run docker:local
 
 # 4. Access application
-open http://localhost        # via Nginx (recommended)
 open http://localhost:3000   # Next.js direct
 open http://localhost:8000   # API direct
 open http://localhost:8000/docs  # API documentation
@@ -144,7 +144,6 @@ npm run docker:local:clean
 **What's Running:**
 - `nextjs` - Next.js frontend container (port 3000)
 - `python-api` - Python FastAPI backend (port 8000)
-- `nginx` - Reverse proxy (port 80)
 
 📖 **Detailed Documentation:** See [`DOCKER_LOCAL_QUICKSTART.md`](DOCKER_LOCAL_QUICKSTART.md)
 
@@ -171,7 +170,7 @@ npm run docker:ps
 **Services:**
 - Next.js container (port 3000, internal)
 - Python API container (port 8000, internal)
-- Nginx reverse proxy (ports 80/443)
+- Nginx reverse proxy (ports 80/443) # Linux VM only 
 - Certbot for automatic SSL certificates
 
 📖 **Documentation:** See [`DEPLOY.md`](DEPLOY.md) and [`README-DOCKER.md`](README-DOCKER.md)
@@ -694,11 +693,11 @@ API_URL=http://python-api:8000  # Docker internal
 ### Production Docker (`.env`)
 ```bash
 # API URLs
-NEXT_PUBLIC_API_URL=https://data.porenta.us
+NEXT_PUBLIC_API_URL=https://your-domin.com
 API_URL=http://python-api:8000
 
 # Domain for SSL
-DOMAIN=data.porenta.us
+DOMAIN=your-domin.com
 
 # Database
 RDS_HOST=your-rds-endpoint.amazonaws.com
@@ -1009,4 +1008,4 @@ ISC
 
 ---
 
-**Live Instance:** https://data.porenta.us (behind Okta - internal use only)
+**Live Demo Instance:** https://data.porenta.us (Fake data from local .csv files)

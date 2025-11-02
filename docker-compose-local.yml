@@ -47,6 +47,7 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=http://localhost:8000
+        - API_URL=http://python-api:8000
     container_name: nextjs-local
     image: bi-nextjs:local
     restart: unless-stopped
@@ -73,33 +74,6 @@ services:
     tmpfs:
       - /tmp
       - /app/.next/cache
-
-  # Nginx Reverse Proxy (Optional - for testing production-like setup)
-  # Comment out if you want to access services directly via ports 3000/8000
-  nginx:
-    image: nginx:1.25-alpine
-    container_name: nginx-local
-    restart: unless-stopped
-    ports:
-      - "80:80"  # HTTP only for local development
-    depends_on:
-      nextjs:
-        condition: service_healthy
-      python-api:
-        condition: service_healthy
-    networks:
-      - app-network
-    volumes:
-      - ./nginx/nginx-local.conf:/etc/nginx/nginx.conf:ro
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost/api/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-    # Simplified for local development
-    tmpfs:
-      - /var/run
-      - /var/cache/nginx
 
 networks:
   app-network:

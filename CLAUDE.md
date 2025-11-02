@@ -4,7 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Business Intelligence web application for Aptive Environmental C-suite executives, built as a POC combining Next.js 16 frontend with a Python FastAPI backend. The app displays executive dashboards with KPIs and visualizations sourced from CSV files (with plans to integrate AWS RDS databases).
+This is a Business Intelligence web application for Aptive Environmental C-suite executives, built as a POC combining Next.js 16 frontend with a Python FastAPI backend. The app displays executive dashboards with KPIs and visualizations.
+
+**Data Strategy:**
+- **Primary/Demo**: CSV files in `api/data/` - enables demos and frontend development without database dependencies
+- **Production**: AWS RDS PostgreSQL (planned) - CSV files remain as fallback/demo data
+- **Not using**: Snowflake (legacy references in codebase should be ignored)
 
 ## Aptive Brand Guidelines
 
@@ -150,7 +155,8 @@ The frontend makes HTTP requests to the backend API to fetch dashboard data.
 
 - **Single FastAPI Instance**: `api/index.py` is the main FastAPI app that includes all routers. This is NOT a collection of independent serverless functions - it's a unified API with modular routers.
 - **Router Pattern**: API endpoints are organized into routers (`health`, `bi_metadata`, `bi_query`) that are included in the main app.
-- **CSV Data Source**: Currently reads from CSV files in `api/data/`. Production will query AWS RDS databases.
+- **CSV Data Source**: Reads from CSV files in `api/data/`. This is the primary data source for demos and frontend development. CSV files allow frontend iteration without database dependencies and provide stable demo data.
+- **Production Database**: Will connect to AWS RDS PostgreSQL (not Snowflake). CSV files remain as fallback/demo data.
 - **Docker Deployment**: Production runs as containerized services (Next.js + Python API) orchestrated by Docker Compose or AWS ECS Fargate.
 
 ### Production Deployment Architecture
@@ -173,7 +179,7 @@ All services include:
 
 ### Development
 
-**Quick Start (Single Command):**
+**Quick Start (Single Command) - macOS/Linux/WSL:**
 
 ```bash
 # Run both servers with one command
@@ -182,7 +188,17 @@ All services include:
 
 The script will start both the Python API (port 8000) and Next.js frontend (port 3000). Press Ctrl+C to stop both servers.
 
-**Manual Start (Separate Terminals):**
+**Windows (PowerShell/CMD):**
+
+```powershell
+# Terminal 1 - Python API Backend
+venv\Scripts\python.exe run_api.py
+
+# Terminal 2 - Next.js Frontend (separate terminal)
+npm run dev
+```
+
+**Manual Start (Separate Terminals) - macOS/Linux:**
 
 ```bash
 # Terminal 1 - Python API Backend
@@ -212,8 +228,11 @@ npm start
 # Local development environment
 npm run docker:local
 
-# Access at http://localhost:3000 or http://localhost
+# Access at http://localhost (via nginx - RECOMMENDED)
+# NOT http://localhost:3000 (direct Next.js - API routing won't work)
 ```
+
+**Important**: When running in Docker, always access through nginx at `http://localhost` (port 80). Direct access to `http://localhost:3000` bypasses nginx and breaks API routing because Next.js rewrites are disabled in production mode.
 
 **Docker Deployment (Production Server):**
 
@@ -242,16 +261,28 @@ npm run lint
 
 ### Python Environment Setup
 
+**macOS/Linux:**
 ```bash
 # Create virtual environment (first time only)
 python3.11 -m venv venv
 
 # Activate virtual environment
-source venv/bin/activate  # macOS/Linux
-venv\Scripts\activate      # Windows
+source venv/bin/activate
 
 # Install Python dependencies
-./venv/bin/pip install -r requirements.txt
+pip install -r requirements.txt
+```
+
+**Windows:**
+```powershell
+# Create virtual environment (first time only)
+python -m venv venv
+
+# Activate virtual environment
+venv\Scripts\activate
+
+# Install Python dependencies
+pip install -r requirements.txt
 ```
 
 ## Directory Structure
@@ -332,9 +363,11 @@ Available report_id values for `/bi/query`:
 
 - **FastAPI 0.104.1** - Modern async web framework
 - **Uvicorn 0.24.0** - ASGI server (note: uses import string format for auto-reload in `run_api.py`)
-- **psycopg2** - PostgreSQL database driver for AWS RDS - to be added
 - **Pydantic 2.5.0** - Data validation
 - **python-dotenv 1.0.1** - Environment variable management
+- **boto3** - AWS SDK (for Secrets Manager, optional)
+
+**Note**: `requirements.txt` currently includes `snowflake-connector-python` which should be replaced with `psycopg2-binary` when implementing AWS RDS PostgreSQL connection.
 
 ### Environment Variables
 
@@ -342,7 +375,9 @@ Available report_id values for `/bi/query`:
 
 **Docker/Production:** Environment variables are loaded from `.env` file (not committed to git)
 
-Required variables:
+**CSV Mode (Default)**: The application works without any database configuration. It reads from CSV files in `api/data/`. This is the recommended mode for demos and frontend development.
+
+**Database Configuration (Optional - for production AWS RDS PostgreSQL)**:
 ```
 # Database Configuration (AWS RDS PostgreSQL)
 RDS_HOST=your-rds-endpoint.amazonaws.com
@@ -364,7 +399,7 @@ OKTA_CLIENT_ID=...
 OKTA_CLIENT_SECRET=...
 ```
 
-Currently using CSV mock data. Database configuration will be required for AWS RDS integration.
+**Note**: `.env.local.example` currently contains Snowflake configuration variables which are not used. These should be replaced with AWS RDS variables when needed.
 
 ## Development Workflow
 
@@ -377,14 +412,16 @@ Currently using CSV mock data. Database configuration will be required for AWS R
 5. Fetch data using `fetch('http://localhost:8000/bi/query?report_id=new-dashboard')`
 6. Render using KPICard and Recharts components
 
-### Switching from CSV to AWS RDS PostgreSQL
+### Adding AWS RDS PostgreSQL (While Keeping CSV)
 
-When ready to connect to AWS RDS PostgreSQL:
-1. Install database driver: `pip install psycopg2-binary`
-2. Implement RDS connection in `api/routers/bi_query.py`
-3. Replace `read_csv_data()` with `query_database()`
-4. Ensure environment variables are configured (RDS_HOST, RDS_PORT, etc.)
-5. Test with real queries before removing CSV fallback
+When ready to add AWS RDS PostgreSQL support:
+1. Update `requirements.txt`: Remove `snowflake-connector-python`, add `psycopg2-binary`
+2. Install database driver: `pip install psycopg2-binary`
+3. Implement RDS connection in `api/routers/bi_query.py`
+4. Add `query_database()` function alongside `read_csv_data()`
+5. Ensure environment variables are configured (RDS_HOST, RDS_PORT, etc.)
+6. Implement fallback logic: try database first, fall back to CSV if database unavailable
+7. **Keep CSV files**: They remain essential for demos and frontend development
 
 Example PostgreSQL connection setup:
 ```python
@@ -444,20 +481,23 @@ open http://localhost:8000/docs
 
 ### Development
 - The Python API must be running for the frontend to display any data
-- Python uses virtual environment at `./venv` - always use `./venv/bin/python` or `./venv/bin/pip`
-- The `start.sh` script handles graceful shutdown of both servers with Ctrl+C
+- Python uses virtual environment at `./venv` - always use `./venv/bin/python` or `./venv/bin/pip` (Windows: `venv\Scripts\python.exe`)
+- The `start.sh` script works on macOS/Linux/WSL only. Windows users should run servers manually in separate terminals
 - Pages are client components (`'use client'`) due to data fetching and useState/useEffect usage
 
 ### Data & API
-- CSV data includes mock executive metrics for demonstration
+- **CSV files are essential**: They provide stable demo data and enable frontend development without database dependencies. Do not remove them.
+- CSV data includes mock executive metrics for demonstration and can be exported from real data sources
 - Dashboard pages expect specific data structures from the API (columns + rows)
 - All numeric values in CSV are automatically converted to int/float by the API
 - CORS is currently set to allow all origins (`allow_origins=["*"]`) - restrict in production
+- When AWS RDS is implemented, CSV files remain as fallback/demo data
 
 ### Docker Deployment
+- **Access through nginx only**: Use `http://localhost` (port 80), NOT `http://localhost:3000`. Direct access to port 3000 bypasses nginx and breaks API routing.
 - Next.js uses standalone build mode (configured in `next.config.js`)
 - Services communicate via Docker network (Next.js → http://python-api:8000)
-- Nginx routes `/api/*` to Python service, everything else to Next.js
-- SSL certificates are managed automatically by Certbot
+- Nginx routes `/api/*` to Python service (strips `/api` prefix), everything else to Next.js
+- SSL certificates are managed automatically by Certbot (production only)
 - All containers run as non-root users with security hardening
 - Logs are rotated automatically (max 10MB, 3 files per service)
