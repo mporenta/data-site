@@ -25,6 +25,110 @@ This application provides executive-level business intelligence through interact
 | **Deployment** | Docker → AWS ECS Fargate + CloudFront |
 | **Auth** | Okta OIDC (planned) |
 
+## Open Source Tools & Resources
+
+This project is built with excellent free and open-source tools:
+
+### TailAdmin Free - Dashboard UI Components
+
+**TailAdmin** provides the foundational dashboard layout, navigation, and UI components.
+
+- **License**: Free (Open Source)
+- **Website**: [https://tailadmin.com](https://tailadmin.com)
+- **Demo**: [Next.js Demo](https://nextjs-demo.tailadmin.com)
+- **Features Used**:
+  - Sidebar navigation with active state highlighting
+  - Header with user profile and notifications
+  - Responsive grid layout system
+  - Dark mode support
+  - Card components for KPIs and charts
+
+**Components from TailAdmin:**
+- `Sidebar.tsx` - Navigation sidebar with dashboard menu
+- Dashboard layout structure (`app/layout.tsx`)
+- KPI card styling and grid layouts
+
+### Recharts - Composable Charting Library
+
+**Recharts** powers all data visualizations with beautiful, responsive charts.
+
+- **License**: MIT (Open Source)
+- **GitHub**: [recharts/recharts](https://github.com/recharts/recharts)
+- **Documentation**: [https://recharts.org](https://recharts.org)
+- **Examples**: [Recharts Gallery](https://recharts.org/en-US/examples)
+
+**Charts Used in This Project:**
+
+| Chart Type | Used In | Example |
+|------------|---------|---------|
+| **Line Chart** | Revenue trends, customer churn | [Example](https://recharts.org/en-US/examples/SimpleLineChart) |
+| **Bar Chart** | Daily routes completed, technician hours | [Example](https://recharts.org/en-US/examples/SimpleBarChart) |
+| **Area Chart** | Customer growth, retention rates | [Example](https://recharts.org/en-US/examples/SimpleAreaChart) |
+| **Radar Chart** | Performance metrics overview | [Example](https://recharts.org/en-US/examples/SimpleRadarChart) |
+| **Pie Chart** | Category distributions | [Example](https://recharts.org/en-US/examples/PieChartWithCustomizedLabel) |
+
+**Example Chart Implementation:**
+
+```tsx
+// Revenue Trend - Line Chart with Area Fill
+<ResponsiveContainer width="100%" height={300}>
+  <AreaChart data={revenueData}>
+    <defs>
+      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="5%" stopColor="#3C50E0" stopOpacity={0.8}/>
+        <stop offset="95%" stopColor="#3C50E0" stopOpacity={0}/>
+      </linearGradient>
+    </defs>
+    <CartesianGrid strokeDasharray="3 3" />
+    <XAxis dataKey="month" />
+    <YAxis tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
+    <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
+    <Area
+      type="monotone"
+      dataKey="total_revenue"
+      stroke="#3C50E0"
+      fill="url(#colorRevenue)"
+    />
+  </AreaChart>
+</ResponsiveContainer>
+
+// Operations - Bar Chart with Custom Styling
+<ResponsiveContainer width="100%" height={300}>
+  <BarChart data={operationsData}>
+    <CartesianGrid strokeDasharray="3 3" />
+    <XAxis dataKey="date" />
+    <YAxis />
+    <Tooltip />
+    <Bar
+      dataKey="routes_completed"
+      fill="#3C50E0"
+      radius={[8, 8, 0, 0]}
+    />
+  </BarChart>
+</ResponsiveContainer>
+```
+
+**Key Features We Use:**
+- 📱 Fully responsive charts that adapt to container size
+- 🎨 Customizable colors matching Aptive brand (Pine #344C38, Blue #3C50E0)
+- 📊 Real-time data updates with smooth animations
+- 🖱️ Interactive tooltips with formatted values
+- 📈 Multiple chart types composed together
+
+### Additional Open Source Libraries
+
+| Library | Purpose | License |
+|---------|---------|---------|
+| **Lucide React** | Icon system | ISC |
+| **Tailwind CSS** | Utility-first CSS framework | MIT |
+| **FastAPI** | Python web framework | MIT |
+| **Uvicorn** | ASGI server | BSD |
+
+**Learn More:**
+- [Recharts Documentation](https://recharts.org/en-US/guide)
+- [TailAdmin Components](https://nextjs-demo.tailadmin.com)
+- [Tailwind CSS](https://tailwindcss.com)
+
 ## Architecture
 
 ```
