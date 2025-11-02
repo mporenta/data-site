@@ -155,6 +155,7 @@ The frontend makes HTTP requests to the backend API to fetch dashboard data.
 
 - **Single FastAPI Instance**: `api/index.py` is the main FastAPI app that includes all routers. This is NOT a collection of independent serverless functions - it's a unified API with modular routers.
 - **Router Pattern**: API endpoints are organized into routers (`health`, `bi_metadata`, `bi_query`) that are included in the main app.
+- **API Routing**: Next.js rewrites `/api/bi/*` to Python API via `next.config.js`. The `API_URL` env var controls the target (localhost:8000 for dev, python-api:8000 for Docker).
 - **CSV Data Source**: Reads from CSV files in `api/data/`. This is the primary data source for demos and frontend development. CSV files allow frontend iteration without database dependencies and provide stable demo data.
 - **Production Database**: Will connect to AWS RDS PostgreSQL (not Snowflake). CSV files remain as fallback/demo data.
 - **Docker Deployment**: Production runs as containerized services (Next.js + Python API) orchestrated by Docker Compose or AWS ECS Fargate.
@@ -228,11 +229,9 @@ npm start
 # Local development environment
 npm run docker:local
 
-# Access at http://localhost (via nginx - RECOMMENDED)
-# NOT http://localhost:3000 (direct Next.js - API routing won't work)
+# Access at http://localhost:3000 (Next.js direct access)
+# OR http://localhost (via nginx, optional)
 ```
-
-**Important**: When running in Docker, always access through nginx at `http://localhost` (port 80). Direct access to `http://localhost:3000` bypasses nginx and breaks API routing because Next.js rewrites are disabled in production mode.
 
 **Docker Deployment (Production Server):**
 
@@ -466,6 +465,22 @@ curl http://localhost:8000/bi/query?report_id=kpi-summary
 open http://localhost:8000/docs
 ```
 
+### Troubleshooting API Routing in Docker
+
+If you see "Internal Server Error" or "ECONNREFUSED" errors when accessing `/api/bi/*` endpoints in Docker:
+
+1. **Check Next.js logs**: `docker logs nextjs-local`
+2. **Look for**: `Failed to proxy http://127.0.0.1:8000` - This means `API_URL` wasn't available at build time
+3. **Fix**: Ensure `API_URL` is passed as a **build argument** in docker-compose:
+   ```yaml
+   build:
+     args:
+       - API_URL=http://python-api:8000
+   ```
+4. **Rebuild**: `docker compose -f docker-compose-local.yml up -d --build nextjs`
+
+**Why this happens**: Next.js evaluates `next.config.js` at build time. If `API_URL` is only set as a runtime environment variable, it won't be available during the build, causing rewrites to use the fallback `http://127.0.0.1:8000` which doesn't exist inside the container.
+
 ## Future Planned Features
 
 - Okta OIDC authentication
@@ -494,10 +509,12 @@ open http://localhost:8000/docs
 - When AWS RDS is implemented, CSV files remain as fallback/demo data
 
 ### Docker Deployment
-- **Access through nginx only**: Use `http://localhost` (port 80), NOT `http://localhost:3000`. Direct access to port 3000 bypasses nginx and breaks API routing.
+- **API Routing**: Next.js rewrites `/api/bi/*` to Python API at `http://python-api:8000/bi/*` via `next.config.js` rewrites
+- **Critical**: `API_URL` must be passed as a Docker **build argument**, not just runtime env var (see docker-compose-local.yml)
 - Next.js uses standalone build mode (configured in `next.config.js`)
 - Services communicate via Docker network (Next.js → http://python-api:8000)
-- Nginx routes `/api/*` to Python service (strips `/api` prefix), everything else to Next.js
+- Access at `http://localhost:3000` (direct) or `http://localhost` (via nginx)
+- Nginx is optional for local dev (routes `/api/*` to Python, everything else to Next.js)
 - SSL certificates are managed automatically by Certbot (production only)
 - All containers run as non-root users with security hardening
 - Logs are rotated automatically (max 10MB, 3 files per service)

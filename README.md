@@ -61,7 +61,8 @@ This application provides executive-level business intelligence through interact
 **Dual-Server Architecture:**
 - **Next.js Frontend** (Port 3000): Server-side rendered React with Server Components
 - **Python FastAPI Backend** (Port 8000): Unified API with modular routers
-- **Database**: AWS RDS PostgreSQL with connection pooling
+- **API Routing**: Next.js rewrites `/api/bi/*` to Python API via `next.config.js`
+- **Database**: AWS RDS PostgreSQL with connection pooling (currently using CSV files)
 
 ## Quick Start
 
@@ -144,6 +145,9 @@ npm run docker:local:clean
 **What's Running:**
 - `nextjs` - Next.js frontend container (port 3000)
 - `python-api` - Python FastAPI backend (port 8000)
+- `nginx` - Reverse proxy (port 80, optional)
+
+**API Routing**: Next.js uses rewrites in `next.config.js` to proxy `/api/bi/*` requests to the Python API. The `API_URL` build argument configures the target (must be `http://python-api:8000` for Docker).
 
 📖 **Detailed Documentation:** See [`DOCKER_LOCAL_QUICKSTART.md`](DOCKER_LOCAL_QUICKSTART.md)
 
@@ -969,16 +973,30 @@ docker compose -f docker-compose-local.yml exec python-api python test_db.py
 # Check RDS security group allows connections from ECS/EC2
 ```
 
-### API Returns 404
+### API Returns 500 "Internal Server Error" (Docker)
+
+If you see 500 errors when accessing `/api/bi/*` endpoints in Docker:
+
 ```bash
-# Check nginx routing
-docker compose -f docker-compose-local.yml logs nginx
+# 1. Check Next.js logs for connection errors
+docker logs nextjs-local
 
-# Test API directly
-curl http://localhost:8000/bi/query?report_id=kpi-summary
+# 2. If you see "ECONNREFUSED 127.0.0.1:8000", the issue is:
+#    API_URL wasn't available at build time
 
-# Verify Next.js rewrites in next.config.js
+# 3. Fix: Ensure docker-compose-local.yml has API_URL as build arg:
+#    build:
+#      args:
+#        - API_URL=http://python-api:8000
+
+# 4. Rebuild Next.js container
+docker compose -f docker-compose-local.yml up -d --build nextjs
+
+# 5. Test the fix
+curl http://localhost:3000/api/bi/query?report_id=kpi-summary
 ```
+
+**Root Cause**: Next.js evaluates `next.config.js` at **build time**. If `API_URL` is only set as a runtime environment variable, rewrites will use the fallback `http://127.0.0.1:8000`, which doesn't exist inside the container.
 
 ## Contributing
 
