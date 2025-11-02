@@ -1,0 +1,108 @@
+# Docker Compose configuration for LOCAL development on Docker Desktop
+# Simplified version without SSL, Certbot, and with direct port access
+#
+# Usage:
+#   docker compose -f docker-compose-local.yml up -d --build
+#   docker compose -f docker-compose-local.yml down
+#
+# Access:
+#   - Next.js Frontend: http://localhost:3000
+#   - Python API: http://localhost:8000
+#   - API Docs (Swagger): http://localhost:8000/docs
+
+services:
+  # Python FastAPI Backend Service
+  python-api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: python-api-local
+    image: bi-python-api:local
+    restart: unless-stopped
+    networks:
+      - app-network
+    ports:
+      - "8000:8000"  # Exposed for direct access and debugging
+    environment:
+      - SNOWFLAKE_ACCOUNT=${SNOWFLAKE_ACCOUNT:-}
+      - SNOWFLAKE_USER=${SNOWFLAKE_USER:-}
+      - SNOWFLAKE_PASSWORD=${SNOWFLAKE_PASSWORD:-}
+      - SNOWFLAKE_WAREHOUSE=${SNOWFLAKE_WAREHOUSE:-}
+      - SNOWFLAKE_DATABASE=${SNOWFLAKE_DATABASE:-}
+      - SNOWFLAKE_SCHEMA=${SNOWFLAKE_SCHEMA:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    # Simplified for local development - no strict security
+    tmpfs:
+      - /tmp
+
+  # Next.js Frontend Service
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8000
+    container_name: nextjs-local
+    image: bi-nextjs:local
+    restart: unless-stopped
+    networks:
+      - app-network
+    ports:
+      - "3000:3000"  # Exposed for direct access
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      # For server-side fetches, use docker network name
+      - API_URL=http://python-api:8000
+    depends_on:
+      python-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    # Simplified for local development
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+
+  # Nginx Reverse Proxy (Optional - for testing production-like setup)
+  # Comment out if you want to access services directly via ports 3000/8000
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: nginx-local
+    restart: unless-stopped
+    ports:
+      - "80:80"  # HTTP only for local development
+    depends_on:
+      nextjs:
+        condition: service_healthy
+      python-api:
+        condition: service_healthy
+    networks:
+      - app-network
+    volumes:
+      - ./nginx/nginx-local.conf:/etc/nginx/nginx.conf:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    # Simplified for local development
+    tmpfs:
+      - /var/run
+      - /var/cache/nginx
+
+networks:
+  app-network:
+    driver: bridge
+
+# No volumes needed for local development - everything is ephemeral
