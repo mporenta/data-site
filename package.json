@@ -16,7 +16,14 @@
     "docker:ps": "docker compose ps",
     "docker:restart": "docker compose restart",
     "docker:rebuild": "docker compose up -d --build",
-    "docker:clean": "docker compose down -v && docker system prune -f"
+    "docker:clean": "docker compose down -v && docker system prune -f",
+    "docker:local": "docker compose -f docker-compose-local.yml --env-file .env.local up -d --build",
+    "docker:local:down": "docker compose -f docker-compose-local.yml down",
+    "docker:local:logs": "docker compose -f docker-compose-local.yml logs -f",
+    "docker:local:ps": "docker compose -f docker-compose-local.yml ps",
+    "docker:local:restart": "docker compose -f docker-compose-local.yml restart",
+    "docker:local:rebuild": "docker compose -f docker-compose-local.yml up -d --build",
+    "docker:local:clean": "docker compose -f docker-compose-local.yml down -v --rmi all"
   },
   "keywords": [],
   "author": "",

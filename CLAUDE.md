@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Business Intelligence web application for Aptive Environmental C-suite executives, built as a POC combining Next.js 16 frontend with a Python FastAPI backend. The app displays executive dashboards with KPIs and visualizations sourced from CSV files (with plans to integrate Snowflake).
+This is a Business Intelligence web application for Aptive Environmental C-suite executives, built as a POC combining Next.js 16 frontend with a Python FastAPI backend. The app displays executive dashboards with KPIs and visualizations sourced from CSV files (with plans to integrate AWS RDS databases).
 
 ## Aptive Brand Guidelines
 
@@ -150,8 +150,8 @@ The frontend makes HTTP requests to the backend API to fetch dashboard data.
 
 - **Single FastAPI Instance**: `api/index.py` is the main FastAPI app that includes all routers. This is NOT a collection of independent serverless functions - it's a unified API with modular routers.
 - **Router Pattern**: API endpoints are organized into routers (`health`, `bi_metadata`, `bi_query`) that are included in the main app.
-- **CSV Data Source**: Currently reads from CSV files in `api/data/`. Production will query Snowflake.
-- **Vercel Deployment**: The `vercel.json` configuration routes all `/api/*` requests to the Python function while Next.js handles the frontend.
+- **CSV Data Source**: Currently reads from CSV files in `api/data/`. Production will query AWS RDS databases.
+- **Docker Deployment**: Production runs as containerized services (Next.js + Python API) orchestrated by Docker Compose or AWS ECS Fargate.
 
 ### Production Deployment Architecture
 
@@ -206,38 +206,32 @@ npm run build
 npm start
 ```
 
-**Vercel Deployment:**
+**Docker Deployment (Local):**
 
 ```bash
-# Deploy to Vercel
-vercel
-vercel --prod
+# Local development environment
+npm run docker:local
+
+# Access at http://localhost:3000 or http://localhost
 ```
 
-**Docker Deployment:**
+**Docker Deployment (Production Server):**
 
 ```bash
-# Build and start all services (Next.js, Python API, Nginx, SSL)
+# Build and start all services (includes Nginx + SSL)
 npm run docker:build
 npm run docker:up
 
 # View logs
 npm run docker:logs
+```
 
-# Check service status
-npm run docker:ps
+**AWS Fargate Deployment (Planned):**
 
-# Restart services
-npm run docker:restart
-
-# Rebuild and restart
-npm run docker:rebuild
-
-# Stop services
-npm run docker:down
-
-# Clean up all Docker resources
-npm run docker:clean
+```bash
+# Push images to ECR and deploy via ECS
+# CloudFront → ALB → Fargate (Next.js + Python API)
+# See README.md for detailed AWS deployment steps
 ```
 
 ### Linting
@@ -269,7 +263,7 @@ bi_web_app/
 │   ├── routers/                  # API route handlers
 │   │   ├── health.py             # Health check endpoint
 │   │   ├── bi_metadata.py        # Dashboard metadata (list of dashboards)
-│   │   └── bi_query.py           # Data queries (currently CSV, future Snowflake)
+│   │   └── bi_query.py           # Data queries (currently CSV, future AWS RDS)
 │   └── data/                     # CSV data files
 │       ├── kpi_summary.csv
 │       ├── exec_revenue.csv
@@ -286,7 +280,9 @@ bi_web_app/
 │   ├── Sidebar.tsx               # Navigation sidebar
 │   └── KPICard.tsx               # Reusable KPI display card
 ├── run_api.py                    # Development server launcher for API
-└── vercel.json                   # Vercel deployment configuration
+├── docker-compose.yml            # Production Docker configuration
+├── docker-compose-local.yml      # Local Docker Desktop configuration
+└── Dockerfile                    # Next.js container build
 ```
 
 ## API Endpoints
@@ -336,7 +332,7 @@ Available report_id values for `/bi/query`:
 
 - **FastAPI 0.104.1** - Modern async web framework
 - **Uvicorn 0.24.0** - ASGI server (note: uses import string format for auto-reload in `run_api.py`)
-- **Snowflake Connector 3.12.3** - Database driver (not yet used)
+- **psycopg2** - PostgreSQL database driver for AWS RDS - to be added
 - **Pydantic 2.5.0** - Data validation
 - **python-dotenv 1.0.1** - Environment variable management
 
@@ -348,17 +344,27 @@ Available report_id values for `/bi/query`:
 
 Required variables:
 ```
-SNOWFLAKE_ACCOUNT=...
-SNOWFLAKE_USER=...
-SNOWFLAKE_PASSWORD=...
-SNOWFLAKE_WAREHOUSE=...
-SNOWFLAKE_DATABASE=...
-SNOWFLAKE_SCHEMA=...
-NEXT_PUBLIC_API_URL=http://localhost:8000  # Development only
-DOMAIN=yourdomain.com  # Docker deployment only
+# Database Configuration (AWS RDS PostgreSQL)
+RDS_HOST=your-rds-endpoint.amazonaws.com
+RDS_PORT=5432
+RDS_DATABASE=bi_database
+RDS_USER=db_user
+RDS_PASSWORD=secure_password
+
+# API Configuration
+API_URL=http://python-api:8000  # Docker internal
+NEXT_PUBLIC_API_URL=https://yourdomain.com  # Client-side
+
+# Docker Deployment
+DOMAIN=yourdomain.com  # For SSL certificate
+
+# Authentication (future)
+OKTA_ISSUER=https://aptive.okta.com/oauth2/default
+OKTA_CLIENT_ID=...
+OKTA_CLIENT_SECRET=...
 ```
 
-Currently unused (CSV mode), but required for Snowflake integration.
+Currently using CSV mock data. Database configuration will be required for AWS RDS integration.
 
 ## Development Workflow
 
@@ -371,13 +377,41 @@ Currently unused (CSV mode), but required for Snowflake integration.
 5. Fetch data using `fetch('http://localhost:8000/bi/query?report_id=new-dashboard')`
 6. Render using KPICard and Recharts components
 
-### Switching from CSV to Snowflake
+### Switching from CSV to AWS RDS PostgreSQL
 
-When ready to connect to Snowflake:
-1. Implement Snowflake connection in `api/routers/bi_query.py`
-2. Replace `read_csv_data()` with `query_snowflake()`
-3. Ensure environment variables are configured
-4. Test with real queries before removing CSV fallback
+When ready to connect to AWS RDS PostgreSQL:
+1. Install database driver: `pip install psycopg2-binary`
+2. Implement RDS connection in `api/routers/bi_query.py`
+3. Replace `read_csv_data()` with `query_database()`
+4. Ensure environment variables are configured (RDS_HOST, RDS_PORT, etc.)
+5. Test with real queries before removing CSV fallback
+
+Example PostgreSQL connection setup:
+```python
+import psycopg2
+from psycopg2.pool import SimpleConnectionPool
+
+# Connection pool for better performance
+pool = SimpleConnectionPool(
+    minconn=1,
+    maxconn=10,
+    host=os.getenv('RDS_HOST'),
+    port=os.getenv('RDS_PORT', 5432),
+    database=os.getenv('RDS_DATABASE'),
+    user=os.getenv('RDS_USER'),
+    password=os.getenv('RDS_PASSWORD'),
+    sslmode='require'  # AWS RDS requires SSL
+)
+
+# Get connection from pool
+conn = pool.getconn()
+try:
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM dashboards WHERE report_id = %s", (report_id,))
+    results = cursor.fetchall()
+finally:
+    pool.putconn(conn)
+```
 
 ### Testing the API
 
@@ -399,11 +433,12 @@ open http://localhost:8000/docs
 
 - Okta OIDC authentication
 - Role-based access control (groups from metadata)
-- Real Snowflake queries replacing CSV
+- AWS RDS database integration replacing CSV
 - PDF export functionality
-- Real-time data updates
-- dbt metadata integration
-- Connection pooling and caching
+- Real-time data updates via WebSockets
+- Connection pooling and query caching
+- AWS Fargate deployment with CloudFront CDN
+- Multi-environment support (dev/staging/prod)
 
 ## Important Notes
 
