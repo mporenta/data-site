@@ -1,29 +1,12 @@
 import KPICard from '@/components/KPICard'
 import { fetchFromApi } from '@/lib/api'
+import type { QueryResponse } from '@/types/api'
 
 // Force dynamic rendering - don't prerender at build time
 // This page requires real-time data and is behind Okta auth
 export const dynamic = 'force-dynamic'
 
-interface KPIData {
-  metric: string
-  current_value: number
-  previous_value: number
-  target_value: number
-  unit: string
-  change_percent: number
-}
-
-interface ApiResponse {
-  report_id: string
-  data: {
-    columns: string[]
-    rows: KPIData[]
-    count: number
-  }
-  source: string
-  message: string
-}
+type KPIData = QueryResponse['data']['rows'][number]
 
 // Helper functions
 function getKPI(kpis: KPIData[], metric: string) {
@@ -39,8 +22,8 @@ function getTrend(changePercent: number): 'up' | 'down' | 'neutral' {
 // Server Component - data fetching happens on the server
 export default async function Home() {
   // Fetch KPI data on the server
-  const result = await fetchFromApi<ApiResponse>('/api/bi/query?report_id=kpi-summary')
-  const kpis = result.data.rows
+  const result = await fetchFromApi<QueryResponse>('/api/bi/query?report_id=kpi-summary')
+  const kpis: KPIData[] = result.data.rows
 
   const arr = getKPI(kpis, 'ARR')
   const mrr = getKPI(kpis, 'MRR')
