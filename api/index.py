@@ -3,7 +3,7 @@ Main FastAPI application entry point
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import health, bi_metadata, bi_query
+from routers import health, bi_metadata, bi_query
 
 app = FastAPI(
     title="BI Web App API",

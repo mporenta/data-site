@@ -7,7 +7,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query, Response
 
-from ..models import QueryData, QueryResponse
+from models.bi import QueryData, QueryResponse
 
 router = APIRouter()
 

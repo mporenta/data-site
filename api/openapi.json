@@ -26,7 +26,7 @@
         }
       }
     },
-    "/bi/metadata": {
+    "/api/bi/metadata": {
       "get": {
         "tags": [
           "bi-metadata"
@@ -48,7 +48,7 @@
         }
       }
     },
-    "/bi/metadata/{dashboard_id}": {
+    "/api/bi/metadata/{dashboard_id}": {
       "get": {
         "tags": [
           "bi-metadata"
@@ -91,7 +91,7 @@
         }
       }
     },
-    "/bi/query": {
+    "/api/bi/query": {
       "get": {
         "tags": [
           "bi-query"
@@ -329,7 +329,7 @@
           "message"
         ],
         "title": "QueryResponse",
-        "description": "Response payload for the `/bi/query` endpoint."
+        "description": "Response payload for the `/api/bi/query` endpoint."
       },
       "ValidationError": {
         "properties": {

@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException
 
-from ..models import DashboardMetadata, DashboardMetadataListResponse
+from models.bi import DashboardMetadata, DashboardMetadataListResponse
 
 router = APIRouter()
 
