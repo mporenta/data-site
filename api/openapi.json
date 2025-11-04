@@ -1,0 +1,369 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "BI Web App API",
+    "description": "Business Intelligence API for executive dashboards",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Check",
+        "description": "Returns the health status of the API",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bi/metadata": {
+      "get": {
+        "tags": [
+          "bi-metadata"
+        ],
+        "summary": "Get Dashboards Metadata",
+        "description": "Returns metadata for all available dashboards.",
+        "operationId": "get_dashboards_metadata_bi_metadata_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardMetadataListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bi/metadata/{dashboard_id}": {
+      "get": {
+        "tags": [
+          "bi-metadata"
+        ],
+        "summary": "Get Dashboard Metadata",
+        "description": "Returns metadata for a specific dashboard.",
+        "operationId": "get_dashboard_metadata_bi_metadata__dashboard_id__get",
+        "parameters": [
+          {
+            "name": "dashboard_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dashboard Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardMetadata"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bi/query": {
+      "get": {
+        "tags": [
+          "bi-query"
+        ],
+        "summary": "Query Data",
+        "description": "Read data from CSV files and return as JSON.\n\nIn production, this will query AWS RDS databases.",
+        "operationId": "query_data_bi_query_get",
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Report ID to query",
+              "title": "Report Id"
+            },
+            "description": "Report ID to query"
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional filters as JSON string",
+              "title": "Filters"
+            },
+            "description": "Optional filters as JSON string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Root",
+        "description": "Root endpoint",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DashboardMetadata": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Unique identifier for the dashboard"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable dashboard name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Summary of what the dashboard contains"
+          },
+          "groups": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Groups",
+            "description": "Access groups that can view this dashboard"
+          },
+          "kpis": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Kpis",
+            "description": "Key metrics highlighted in the dashboard"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "groups",
+          "kpis"
+        ],
+        "title": "DashboardMetadata",
+        "description": "Metadata describing an available dashboard."
+      },
+      "DashboardMetadataListResponse": {
+        "properties": {
+          "dashboards": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardMetadata"
+            },
+            "type": "array",
+            "title": "Dashboards"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dashboards",
+          "count"
+        ],
+        "title": "DashboardMetadataListResponse",
+        "description": "Response containing all dashboard metadata."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "QueryData": {
+        "properties": {
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Columns"
+          },
+          "rows": {
+            "items": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "columns",
+          "rows",
+          "count"
+        ],
+        "title": "QueryData",
+        "description": "Tabular data returned for a BI report."
+      },
+      "QueryResponse": {
+        "properties": {
+          "report_id": {
+            "type": "string",
+            "title": "Report Id"
+          },
+          "data": {
+            "$ref": "#/components/schemas/QueryData"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "report_id",
+          "data",
+          "source",
+          "message"
+        ],
+        "title": "QueryResponse",
+        "description": "Response payload for the `/api/bi/query` endpoint."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

@@ -1,29 +1,12 @@
 import KPICard from '@/components/KPICard'
 import { fetchFromApi } from '@/lib/api'
+import type { QueryResponse } from '@/types/api'
 
 // Force dynamic rendering - don't prerender at build time
 // This page requires real-time data and is behind Okta auth
 export const dynamic = 'force-dynamic'
 
-interface KPIData {
-  metric: string
-  current_value: number
-  previous_value: number
-  target_value: number
-  unit: string
-  change_percent: number
-}
-
-interface ApiResponse {
-  report_id: string
-  data: {
-    columns: string[]
-    rows: KPIData[]
-    count: number
-  }
-  source: string
-  message: string
-}
+type KPIData = QueryResponse['data']['rows'][number]
 
 // Helper functions
 function getKPI(kpis: KPIData[], metric: string) {
@@ -39,8 +22,8 @@ function getTrend(changePercent: number): 'up' | 'down' | 'neutral' {
 // Server Component - data fetching happens on the server
 export default async function Home() {
   // Fetch KPI data on the server
-  const result = await fetchFromApi<ApiResponse>('/api/bi/query?report_id=kpi-summary')
-  const kpis = result.data.rows
+  const result = await fetchFromApi<QueryResponse>('/api/bi/query?report_id=kpi-summary')
+  const kpis: KPIData[] = result.data.rows
 
   const arr = getKPI(kpis, 'ARR')
   const mrr = getKPI(kpis, 'MRR')
@@ -65,39 +48,39 @@ export default async function Home() {
 
       {/* Top Row - Revenue Metrics */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5 mb-4 md:mb-6">
-        {arr && (
+        {arr && arr.current_value !== null && arr.change_percent !== null && (
           <KPICard
             title="Annual Recurring Revenue"
-            value={arr.current_value}
-            change={arr.change_percent}
-            trend={getTrend(arr.change_percent)}
+            value={arr.current_value as string | number}
+            change={arr.change_percent as number}
+            trend={getTrend(arr.change_percent as number)}
             format="currency"
           />
         )}
-        {mrr && (
+        {mrr && mrr.current_value !== null && mrr.change_percent !== null && (
           <KPICard
             title="Monthly Recurring Revenue"
-            value={mrr.current_value}
-            change={mrr.change_percent}
-            trend={getTrend(mrr.change_percent)}
+            value={mrr.current_value as string | number}
+            change={mrr.change_percent as number}
+            trend={getTrend(mrr.change_percent as number)}
             format="currency"
           />
         )}
-        {growth && (
+        {growth && growth.current_value !== null && growth.change_percent !== null && (
           <KPICard
             title="Revenue Growth"
-            value={growth.current_value}
-            change={growth.change_percent}
-            trend={getTrend(growth.change_percent)}
+            value={growth.current_value as string | number}
+            change={growth.change_percent as number}
+            trend={getTrend(growth.change_percent as number)}
             format="percent"
           />
         )}
-        {churn && (
+        {churn && churn.current_value !== null && churn.change_percent !== null && (
           <KPICard
             title="Churn Rate"
-            value={churn.current_value}
-            change={churn.change_percent}
-            trend={churn.change_percent < 0 ? 'up' : 'down'}
+            value={churn.current_value as string | number}
+            change={churn.change_percent as number}
+            trend={(churn.change_percent as number) < 0 ? 'up' : 'down'}
             format="percent"
           />
         )}
@@ -105,39 +88,39 @@ export default async function Home() {
 
       {/* Second Row - Operations & Customer Metrics */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5 mb-6">
-        {customers && (
+        {customers && customers.current_value !== null && customers.change_percent !== null && (
           <KPICard
             title="Total Customers"
-            value={customers.current_value}
-            change={customers.change_percent}
-            trend={getTrend(customers.change_percent)}
+            value={customers.current_value as string | number}
+            change={customers.change_percent as number}
+            trend={getTrend(customers.change_percent as number)}
             format="number"
           />
         )}
-        {routes && (
+        {routes && routes.current_value !== null && routes.change_percent !== null && (
           <KPICard
             title="Routes Completed"
-            value={routes.current_value}
-            change={routes.change_percent}
-            trend={getTrend(routes.change_percent)}
+            value={routes.current_value as string | number}
+            change={routes.change_percent as number}
+            trend={getTrend(routes.change_percent as number)}
             subtitle="Last 24 hours"
           />
         )}
-        {quality && (
+        {quality && quality.current_value !== null && quality.change_percent !== null && (
           <KPICard
             title="Quality Score"
-            value={quality.current_value}
-            change={quality.change_percent}
-            trend={getTrend(quality.change_percent)}
+            value={quality.current_value as string | number}
+            change={quality.change_percent as number}
+            trend={getTrend(quality.change_percent as number)}
             subtitle="Out of 5.0"
           />
         )}
-        {nps && (
+        {nps && nps.current_value !== null && nps.change_percent !== null && (
           <KPICard
             title="NPS Score"
-            value={nps.current_value}
-            change={nps.change_percent}
-            trend={getTrend(nps.change_percent)}
+            value={nps.current_value as string | number}
+            change={nps.change_percent as number}
+            trend={getTrend(nps.change_percent as number)}
           />
         )}
       </div>

@@ -23,7 +23,8 @@
     "docker:local:ps": "docker compose -f docker-compose-local.yml ps",
     "docker:local:restart": "docker compose -f docker-compose-local.yml restart",
     "docker:local:rebuild": "docker compose -f docker-compose-local.yml up -d --build",
-    "docker:local:clean": "docker compose -f docker-compose-local.yml down -v --rmi all"
+    "docker:local:clean": "docker compose -f docker-compose-local.yml down -v --rmi all",
+    "sync:types": "python3 -m api.generate_openapi && python3 scripts/openapi_to_ts.py"
   },
   "keywords": [],
   "author": "",

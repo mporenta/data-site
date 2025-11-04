@@ -36,6 +36,11 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
     return () => document.removeEventListener('click', clickHandler)
   })
 
+  // Close sidebar after navigation completes
+  useEffect(() => {
+    setSidebarOpen(false)
+  }, [pathname, setSidebarOpen])
+
   // Close sidebar on ESC key
   useEffect(() => {
     const keyHandler = ({ keyCode }: KeyboardEvent) => {
@@ -92,6 +97,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
                   <li key={item.name}>
                     <Link
                       href={item.href}
+                      onClick={() => setSidebarOpen(false)}
                       className={`group relative flex items-center gap-2.5 rounded-sm px-4 py-2 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                         isActive && 'bg-graydark dark:bg-meta-4'
                       }`}
