@@ -1,0 +1,4 @@
+apache-airflow==2.8.3
+adobe-aep-sdk==0.3.0
+pydantic>=2.5
+boto3>=1.33
