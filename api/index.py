@@ -3,7 +3,7 @@ Main FastAPI application entry point
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import health, bi_metadata, bi_query
+from routers import bi_metadata, bi_query, health, ib_scan
 
 app = FastAPI(
     title="BI Web App API",
@@ -25,6 +25,7 @@ app.add_middleware(
 app.include_router(health.router, tags=["health"])
 app.include_router(bi_metadata.router, prefix="/bi", tags=["bi-metadata"])
 app.include_router(bi_query.router, prefix="/bi", tags=["bi-query"])
+app.include_router(ib_scan.router, tags=["ib-scan"])
 
 
 @app.get("/")
